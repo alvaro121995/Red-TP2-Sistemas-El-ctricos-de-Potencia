@@ -1,0 +1,488 @@
+#----------PORFAVOR LEER------------CÁDA PREGUNTA TIENE SU RESPECTIVO CODIGO POR FAVOR EJECUTE CADA CODIGO POR SEPARADO SINO ARROJARÁ ERROR --------###
+###########################################################################-------------------------------------------------------------------------###
+
+# ----------------------------------ITEM 1: ANLASIS BASE PREGUNTAS 1.1, 1.2 Y 1.3
+
+# Importación de librerías
+import pandapower as pp
+import pandapower.networks as nw
+import geopy.distance
+import pandapower.plotting as pplt
+import matplotlib.pyplot as plt
+import numpy as np
+from geopy.distance import distance
+from pandapower import networks
+import warnings
+import plotly.graph_objects as go
+
+warnings.filterwarnings('ignore')
+
+# Cargar la red GBnetwork
+net = networks.GBnetwork()
+
+#pplt.simple_plotly(net)
+
+#Verificación de los buses
+
+buses_con_cargas = net.load['bus'].unique()
+
+for bus in net.bus.index:
+    if bus in net.gen.bus.values:
+        print("La barra", bus, "posee un generador")
+    elif bus in buses_con_cargas:
+        print(f"La barra {bus} posee una carga.")
+    else:
+        print("La barra", bus, "es una barra normal")
+
+# Realizar el flujo de potencia
+pp.runpp(net)
+
+#Datos de las barras
+
+barras = [1789, 1788, 2169, 2168, 1992, 1991, 2076, 2071, 2072, 1838, 1660,
+          1594, 1589, 1405, 1479, 1510, 1528, 1464, 1444, 1446, 1487, 1488]
+
+print("Los datos de las barras, sin contar la barra escogida, son los siguientes: \n", net.res_bus.loc[barras].to_string())
+
+#Datos de la barra escogida
+
+print("\n Los datos de la barra escogida son: \n", net.res_bus.loc[1982].to_string())
+
+indice_generador = net.gen[net.gen['bus'] == 1789].index
+
+print("\n Los datos del generador escogido son: \n", net.res_gen.loc[indice_generador].to_string())
+
+indice_carga = net.load[net.load['bus'] == 1488].index
+
+print("\n Los datos de la carga escogida son: \n", net.res_load.loc[indice_carga].to_string())
+
+#---------------------------------------------------------------------------------------------------------------------------------------
+
+# ----------------------------------ITEM 2: FLUJO DE POTENCIA PREGUNTA 2.1 Y 2.2
+
+# Importación de librerías
+import pandapower as pp
+import pandapower.networks as nw
+import geopy.distance
+import pandapower.plotting as pplt
+import matplotlib.pyplot as plt
+import numpy as np
+from geopy.distance import distance
+from pandapower import networks
+import warnings
+import plotly.graph_objects as go
+
+warnings.filterwarnings('ignore')
+
+# Cargar la red GBnetwork
+net = networks.GBnetwork()
+
+# Realizar el flujo de potencia
+pp.runpp(net)
+
+#PREGUNTA 1
+
+# Inicializar la pérdida total del sistema
+perdida_total = 0
+
+# Recorrer todas las líneas de la red
+for _, line in net.line.iterrows():
+    from_bus = line.from_bus
+    to_bus = line.to_bus
+
+    # Obtener las pérdidas de la línea
+    perdida = net.res_line.loc[_, 'pl_mw']
+    
+    # Sumar las pérdidas a la pérdida total del sistema
+    perdida_total += perdida
+
+# Imprimir la pérdida total del sistema
+print("Pérdida total del sistema:", perdida_total, "MW")
+
+#PREGUNTA 2
+
+# Obtener los índices de las barras de interés
+buses_de_interes = [1838, 1660, 1983] 
+
+m_be = net.res_bus.loc[1982, 'vm_pu']*net.bus.loc[1982, 'vn_kv']  # Magnitud de la barra escogida
+a_be = net.res_bus.loc[1982, 'va_degree']  # Ángulo de la barra escogida
+
+# Obtener las magnitudes y ángulos de las tensiones en los buses de interés
+for bus in buses_de_interes:
+    magnitud = net.res_bus.loc[bus, 'vm_pu']*net.bus.loc[bus, 'vn_kv']  # Magnitud de la tensión en kv
+    angulo = net.res_bus.loc[bus, 'va_degree']  # Ángulo de la tensión en grados
+    print(f"Tensión en el bus {bus}: Magnitud = {magnitud} kv, Ángulo = {angulo} grados") 
+    if m_be > magnitud:
+        print("La dirección del flujo de potencia para la barra", bus, "es desde la barra escogida hacia esta.")
+    elif m_be < magnitud:
+        print("La dirección del flujo de potencia para la barra", bus, "es desde esta hacia la barra escogida.")
+
+
+#-------------------------- ITEM 2: FLUJO DE POTENCIA PREGUNTA 2.3 ---------------------------#
+
+# Importación de librerías
+import pandapower as pp
+import pandapower.networks as nw
+import geopy.distance
+import pandapower.plotting as pplt
+import matplotlib.pyplot as plt
+import numpy as np
+from geopy.distance import distance
+from pandapower import networks
+import warnings
+import plotly.graph_objects as go
+
+warnings.filterwarnings('ignore')
+
+# Cargar la red GBnetwork
+net = networks.GBnetwork()
+
+# Realizar el flujo de potencia
+pp.runpp(net)
+
+# Presentar los datos de los generadores de la red
+print("Los datos de los generadores de la red antes de la modificación son:\n", net.res_gen)
+
+# Magnitud de la tensión de la barra del consumo escogido
+m_be = net.res_bus.loc[1488, 'vm_pu']*net.bus.loc[1488, 'vn_kv'] 
+
+# Presentar la magnitud de la barra del consumo escogido
+print("La magnitud del voltaje de la barra del consumo escogido (1488) antes de la modificación es igual a", m_be, "[kV]")
+
+net.gen.at[291, 'in_service'] = False
+
+# Realizar el flujo de potencia
+pp.runpp(net)
+
+# Inicializar la pérdida total del sistema
+perdida_total = 0
+
+# Recorrer todas las líneas de la red
+for _, line in net.line.iterrows():
+    from_bus = line.from_bus
+    to_bus = line.to_bus
+
+    # Obtener las pérdidas de la línea
+    perdida = net.res_line.loc[_, 'pl_mw']
+    
+    # Sumar las pérdidas a la pérdida total del sistema
+    perdida_total += perdida
+
+# Magnitud de la tensión de la barra del consumo escogido
+m_be = net.res_bus.loc[1488, 'vm_pu']*net.bus.loc[1488, 'vn_kv'] 
+
+# Presentar los datos de los generadores de la red
+print("Los datos de los generadores de la red son:\n", net.res_gen)
+
+# Presentar la magnitud de la barra del consumo escogido
+print("La magnitud del voltaje de la barra del consumo escogido (1488) es igual a", m_be, "[kV]")
+
+# Presentar la pérdida total del sistema
+print("Pérdida total del sistema:", perdida_total, "[MW]")
+
+
+##----------------------------------# ITEM 2: FLUJO DE POTENCIA PREGUNTA 2.4
+
+# Importación de librerías
+import pandapower as pp
+import pandapower.networks as nw
+import geopy.distance
+import pandapower.plotting as pplt
+import matplotlib.pyplot as plt
+import numpy as np
+from geopy.distance import distance
+from pandapower import networks
+import warnings
+import plotly.graph_objects as go
+
+warnings.filterwarnings('ignore')
+
+# Cargar la red GBnetwork
+net = networks.GBnetwork()
+
+pp.runpp(net)
+
+Vg = 1.1*net.res_gen.loc[291, 'vm_pu']  # Generador aumentado en 10% su voltaje en pu
+
+net.gen.at[291, 'vm_pu'] = Vg
+# Realizar el flujo de potencia para aplicar los cambios
+pp.runpp(net)
+
+# Inicializar la pérdida total del sistema
+perdida_total = 0
+
+# Recorrer todas las líneas de la red
+for _, line in net.line.iterrows():
+    from_bus = line.from_bus
+    to_bus = line.to_bus
+
+    # Obtener las pérdidas de la línea
+    perdida = net.res_line.loc[_, 'pl_mw']
+    
+    # Sumar las pérdidas a la pérdida total del sistema
+    perdida_total += perdida
+
+# Magnitud de la tensión de la barra del consumo escogido
+m_be = net.res_bus.loc[1488, 'vm_pu']*net.bus.loc[1488, 'vn_kv'] 
+
+# Presentar los datos de los generadores de la red
+print("Los datos de los generadores de la red son:\n", net.res_gen)
+
+# Presentar la magnitud de la barra del consumo escogido
+print("La magnitud del voltaje de la barra del consumo escogido (1488) es igual a", m_be, "[kV]")
+
+# Presentar la pérdida total del sistema
+print("Pérdida total del sistema:", perdida_total, "[MW]")
+
+
+#-------------------------------------------------------------------------------------------------------------------------------
+
+# ----------------------------------ITEM 3: CONTROL DE TENSION PREGUNTA 3.1
+
+# Importación de librerías
+import pandapower as pp
+import pandapower.networks as nw
+import geopy.distance
+import pandapower.plotting as pplt
+import matplotlib.pyplot as plt
+import numpy as np
+from geopy.distance import distance
+from pandapower import networks
+import warnings
+import plotly.graph_objects as go
+
+warnings.filterwarnings('ignore')
+
+# Cargar la red GBnetwork
+net = networks.GBnetwork()
+
+#Todas las barras PV
+barras_pv = net.bus.loc[net.gen[net.gen['controllable'] == True].bus]
+# Disminuir en un 4% el voltaje en las barras PV
+barras_pv['vn_kv'] = 0.96*barras_pv['vn_kv']
+
+# Realizar el flujo de potencia
+pp.runpp(net)
+
+#PREGUNTA 1
+
+# Inicializar la pérdida total del sistema
+perdida_total = 0
+
+# Recorrer todas las líneas de la red
+for _, line in net.line.iterrows():
+    from_bus = line.from_bus
+    to_bus = line.to_bus
+
+    # Obtener las pérdidas de la línea
+    perdida = net.res_line.loc[_, 'pl_mw']
+    
+    # Sumar las pérdidas a la pérdida total del sistema
+    perdida_total += perdida
+
+# Imprimir la pérdida total del sistema
+print("Pérdida total del sistema:", perdida_total, "[MW]")
+
+# ------------------------------------------ITEM 3: CONTROL DE TENSION PREGUNTA 3.2
+
+# Importación de librerías
+import pandapower as pp
+import pandapower.networks as nw
+import geopy
+import geopy.distance
+import pandapower.plotting as pplt
+import matplotlib.pyplot as plt
+import numpy as np
+from geopy.geocoders import Nominatim
+from geopy.distance import geodesic
+from pandapower import networks
+import warnings
+import plotly.graph_objects as go
+
+warnings.filterwarnings('ignore')
+
+# Cargar la red GBnetwork
+net = networks.GBnetwork()
+
+# Obtener la carga específica por su índice
+carga = net.load.loc[300]
+
+net.load.at[300, 'const_z_percent'] = 100
+
+# Realizar el flujo de potencia para actualizar los cambios
+pp.runpp(net, enforce_q_lims=True, algorithm='nr', tolerance_mva=10)
+
+#Presentar los datos actualizados de la barra del consumo escogido
+print(net.res_bus.loc[carga.bus])
+
+#SOLO SI SE ENCUENTRA LA FORMA DE HACERLO CON COORDENADAS
+# Crear un objeto geolocalizador
+#geolocator = Nominatim(user_agent="my_app")
+
+# Obtener el bus de la carga ya que el name aparece como None para todas
+#carga_bus = carga['bus']
+
+# Obtener las coordenadas aproximadas de la carga
+#location = geolocator.geocode(carga_bus)
+
+# Coordenadas de la carga
+#carga_coordenadas = (location.latitude, location.longitude)
+
+#carga_lat = location.latitude
+#carga_lon = location.longitude
+#SOLO SI SE ENCUENTRA LA FORMA DE HACERLO CON COORDENADAS
+
+#GENERADOR INICIO
+
+# Lista para almacenar las distancias a los generadores
+#distancias = []
+
+# Iterar sobre los generadores y calcular la distancia a la carga 300
+#for i, generador in net.gen.iterrows():
+#    generador_bus = generador['bus']
+#   generador_location = geolocator.geocode(generador_bus)
+#    generador_lat = generador_location.latitude
+#    generador_lon = generador_location.longitude
+#    distancia = geodesic((carga_lat, carga_lon), (generador_lat, generador_lon)).kilometers
+#    distancias.append(distancia)
+
+# Encontrar el índice del generador más cercano
+#indice_generador_cercano = distancias.index(min(distancias))
+
+# Obtener los detalles del generador más cercano
+#generador_cercano = net.gen.loc[indice_generador_cercano]
+
+# Imprimir los detalles del generador más cercano
+#print("Generador más cercano:")
+#print(generador_cercano)
+
+#GENERADOR FIN
+
+#Aumento en la magnitud de la tensión del generador en un 4%
+gen_cerc_ind= net.res_gen[net.gen['bus'] == 1082].index.values.item() #Indice (escalar)
+net.gen.at[gen_cerc_ind, 'vm_pu'] = 1.04*net.res_gen.loc[gen_cerc_ind, 'vm_pu']
+
+# Realizar el flujo de potencia otra vez para actualizar los cambios
+# Configurar los parámetros de convergencia en pandapower si es 100 el z 
+pp.runpp(net, enforce_q_lims=True, algorithm='nr', tolerance_mva=10)
+
+#Presentar los datos actualizados de la barra del consumo escogido
+print(net.res_bus.loc[carga.bus])
+
+# ----------------------------------ITEM 3: CONTROL DE TENSION PREGUNTA 3.3
+
+# Importación de librerías
+import pandapower as pp
+import pandapower.networks as nw
+import geopy
+import geopy.distance
+import pandapower.plotting as pplt
+import matplotlib.pyplot as plt
+import numpy as np
+from geopy.geocoders import Nominatim
+from geopy.distance import geodesic
+from pandapower import networks
+import warnings
+import plotly.graph_objects as go
+import math 
+
+warnings.filterwarnings('ignore')
+
+# Cargar la red GBnetwork
+net = networks.GBnetwork()
+
+#Se define la carga y la potencia de activa de esta
+carga = net.load.loc[300]
+P = carga['p_mw']
+
+#Realizar el flujo de potencia
+pp.runpp(net)
+
+# Definir los valores de porcentaje de potencia activa a modificar
+porcentajes = np.arange(10, 210, 10)
+
+#Función que actualiza el valor de la potencia activa de la carga
+def mod_p(net, porcentaje):
+    net.load.at[300, 'p_mw'] = (P)*(porcentaje/100)
+
+# Inicializar las listas para almacenar los valores
+porcentajes_potencia = []
+magnitudes_tension = []
+
+# Modificar la potencia activa de la carga y guardar la magnitud de la tensión resultante
+for porcentaje in porcentajes: 
+    mod_p(net, porcentaje)
+    pp.runpp(net)
+    tension = net.res_bus.loc[carga['bus'], 'vm_pu']
+    porcentajes_potencia.append(porcentaje)
+    magnitudes_tension.append(tension)
+
+# Graficar los resultados
+plt.plot(porcentajes_potencia, magnitudes_tension)
+plt.xlabel('Porcentaje de Potencia Activa')
+plt.ylabel('Magnitud de Tensión')
+plt.title('Variación de Magnitud de Tensión vs Potencia Activa')
+plt.grid(True)
+plt.show()
+
+
+
+# -----------------------------------------------ITEM 3: CONTROL DE TENSION PREGUNTA 3.4
+
+# Importación de librerías
+import pandapower as pp
+import pandapower.networks as nw
+import geopy
+import geopy.distance
+import pandapower.plotting as pplt
+import matplotlib.pyplot as plt
+import numpy as np
+from geopy.geocoders import Nominatim
+from geopy.distance import geodesic
+from pandapower import networks
+import warnings
+import plotly.graph_objects as go
+import math 
+
+warnings.filterwarnings('ignore')
+
+# Cargar la red GBnetwork
+net = networks.GBnetwork()
+
+#Se define la carga y la potencia de reactiva de esta
+carga = net.load.loc[300]
+Q = carga['q_mvar']
+
+#Realizar el flujo de potencia
+pp.runpp(net)
+
+# Definir los valores de porcentaje de potencia reactiva a modificar
+porcentajes = np.arange(10, 210, 10)
+
+#Función que actualiza el valor de la potencia reactiva de la carga
+def mod_p(net, porcentaje):
+    net.load.at[300, 'q_mvar'] = (Q)*(porcentaje/100)
+
+# Inicializar las listas para almacenar los valores
+porcentajes_potencia = []
+magnitudes_tension = []
+
+# Modificar la potencia activa de la carga y guardar la magnitud de la tensión resultante
+for porcentaje in porcentajes: 
+    mod_p(net, porcentaje)
+    pp.runpp(net)
+    tension = net.res_bus.loc[carga['bus'], 'vm_pu']
+    porcentajes_potencia.append(porcentaje)
+    magnitudes_tension.append(tension)
+
+# Graficar los resultados
+plt.plot(porcentajes_potencia, magnitudes_tension)
+plt.xlabel('Porcentaje de Potencia Reactiva')
+plt.ylabel('Magnitud de Tensión')
+plt.title('Variación de Magnitud de Tensión vs Potencia Reactiva')
+plt.grid(True)
+plt.show()
+
+##########-------------------------------FIN, GRACIAS Y CUALQUIER DUDA CONTACTAR A alvaro.peralta@alumnos.uach.cl ---- ALVARO PERALTA CHILE --------------------
+
+
